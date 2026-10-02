@@ -307,7 +307,7 @@ body::after {
 }
 
 /* ---------------- VIDEO: χωρίς κουμπί play στα κινητά ---------------- */
-.hero-media { background: #000 url("hero-bg.jpg") 34% 50% / cover no-repeat; }
+.hero-media { background: #000 url("hero-bg.jpg?v=12") 34% 50% / cover no-repeat; }
 .hero-video { pointer-events: none; }
 .hero-video.no-autoplay { visibility: hidden; }
 .hero-video::-webkit-media-controls,
