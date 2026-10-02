@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title id="pgTitle">SUPERBAD</title>
+<meta name="description" content="SUPERBAD — φωτογραφίες και στοιχεία από παλιό πάρτυ.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="logo-sticker.svg" type="image/svg+xml">
+<style>html,body{background:#000;margin:0}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Commissioner:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css?v=7">
+</head>
+<body>
+
+<header class="site-nav">
+  <a href="index.html" class="nav-logo" aria-label="SUPERBAD, αρχική"><img src="logo-sticker.svg" alt="SUPERBAD" width="81" height="34"></a>
+  <a href="index.html" class="back-link">Πίσω στην αρχική</a>
+</header>
+
+<main class="detail">
+  <div class="wrap" id="content"></div>
+</main>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Φωτογραφία">
+  <div class="lightbox-topbar">
+    <span class="lightbox-counter" id="lbCounter">1 / 1</span>
+    <button class="lightbox-close" id="lbClose" aria-label="Κλείσιμο" type="button">&times;</button>
+  </div>
+  <button class="lightbox-nav-btn lb-prev" id="lbPrev" aria-label="Προηγούμενη" type="button">&#8249;</button>
+  <div class="lightbox-img-wrap"><img id="lbImg" src="" alt=""></div>
+  <button class="lightbox-nav-btn lb-next" id="lbNext" aria-label="Επόμενη" type="button">&#8250;</button>
+</div>
+
+<script src="events.js?v=7"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const evSlug = params.get('event') || (typeof PAST_EVENTS !== 'undefined' && PAST_EVENTS[0] ? PAST_EVENTS[0].slug : null);
+const ev     = typeof getEventBySlug === 'function' ? getEventBySlug(evSlug) : null;
+const box    = document.getElementById('content');
+
+/**
+ * Αυτόματο Fallback: αν μια φωτογραφία είναι .jpeg αντί για .jpg
+ * (ή το αντίστροφο), το δοκιμάζει αυτόματα χωρίς σφάλμα!
+ */
+function handleImageFallback(img) {
+  const exts = ['.jpg', '.jpeg', '.JPG', '.JPEG', '.png', '.PNG'];
+  let currentExt = '';
+  for (const e of exts) {
+    if (img.src.endsWith(e)) {
+      currentExt = e;
+      break;
+    }
+  }
+  if (!currentExt) return;
+  
+  let tried = [];
+  try {
+    tried = JSON.parse(img.dataset.tried || '[]');
+  } catch(e) {}
+  tried.push(currentExt);
+  img.dataset.tried = JSON.stringify(tried);
+
+  const nextExt = exts.find(e => !tried.includes(e));
+  if (nextExt) {
+    const newSrc = img.src.slice(0, -currentExt.length) + nextExt;
+    img.src = newSrc;
+    const parent = img.closest('.photo-item');
+    if (parent) {
+      parent.dataset.src = newSrc;
+    }
+  }
+}
+
+if (!ev) {
+  box.innerHTML = '<h1 class="detail-title display">Δεν βρέθηκε</h1><p class="empty-note">Αυτό το πάρτυ δεν υπάρχει στη λίστα. Γύρνα στην αρχική για το επόμενο.</p>';
+} else {
+  document.getElementById('pgTitle').textContent = 'SUPERBAD — ' + ev.label;
+
+  const rows = [
+        ev.time     ? ['Ώρα',      ev.time]     : null,
+    ev.venue    ? ['Μαγαζί',     ev.venueUrl ? `<a href="${ev.venueUrl}" target="_blank" rel="noopener" class="venue-link">${ev.venue}</a>` : ev.venue] : null,
+    ev.address  ? ['Διεύθυνση',   ev.address]  : null,
+    ev.lineup   ? ['DJs',    ev.lineup]   : null,
+    ev.guest    ? ['Guest',  ev.guest]    : null,
+    ev.sponsor  ? ['Sponsor', ev.sponsor] : null,
+  ].filter(Boolean);
+
+  const photos = typeof getPhotoUrls === 'function' ? getPhotoUrls(ev) : [];
+  const thumbs = typeof getThumbUrls === 'function' ? getThumbUrls(ev) : photos;
+
+  box.innerHTML = `
+    <h1 class="detail-title display">${ev.name}</h1>
+    <div class="detail-top party-card${ev.poster ? '' : ' no-poster'}">
+      ${ev.poster ? `<figure class="poster" style="margin:0"><img src="${ev.poster}" alt="Αφίσα: ${ev.name}"></figure>` : ''}
+      <article class="info">
+        <p class="info-tag">${ev.date}</p>
+        <h2 class="info-title display">${ev.label}</h2>
+        <dl class="info-rows">
+          ${rows.map(([l,v]) => `<div class="info-row"><dt>${l}</dt><dd>${v}</dd></div>`).join('')}
+        </dl>
+      </article>
+    </div>
+
+    <div class="gallery-head">
+      <h2 class="gallery-title display">Photos</h2>
+      <span class="gallery-count">${photos.length ? photos.length + ' φωτογραφίες' : ''}</span>
+    </div>
+
+    ${photos.length ? `
+    <div class="photo-grid">
+      ${photos.map((src, idx) => `
+        <button class="photo-item" type="button" data-src="${src}" data-index="${idx}" aria-label="Άνοιγμα φωτογραφίας ${idx + 1}" style="padding:0">
+          <img src="${thumbs[idx]}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${src}'">
+        </button>
+      `).join('')}
+    </div>` : '<p class="empty-note">Οι φωτογραφίες ανεβαίνουν σύντομα.</p>'}
+  `;
+
+  /* Lightbox Logic with Next / Prev / Counter / Keyboard / Swipe */
+  const lb        = document.getElementById('lightbox');
+  const lbImg     = document.getElementById('lbImg');
+  const lbCounter = document.getElementById('lbCounter');
+  const lbClose   = document.getElementById('lbClose');
+  const lbPrev    = document.getElementById('lbPrev');
+  const lbNext    = document.getElementById('lbNext');
+
+  let activePhotoList = [];
+  let currentIndex = 0;
+
+  function refreshPhotoList() {
+    activePhotoList = Array.from(document.querySelectorAll('.photo-item')).map(item => item.dataset.src || item.querySelector('img').src);
+  }
+
+  function showPhoto(idx) {
+    refreshPhotoList();
+    if (!activePhotoList.length) return;
+    
+    if (idx < 0) idx = activePhotoList.length - 1;
+    if (idx >= activePhotoList.length) idx = 0;
+    currentIndex = idx;
+
+    lbImg.src = activePhotoList[currentIndex];
+    lbCounter.textContent = `${currentIndex + 1} / ${activePhotoList.length}`;
+    lb.classList.add('active');
+  }
+
+  function nextPhoto() { showPhoto(currentIndex + 1); }
+  function prevPhoto() { showPhoto(currentIndex - 1); }
+  function closeLightbox() { lb.classList.remove('active'); }
+
+  document.querySelectorAll('.photo-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.index, 10) || 0;
+      showPhoto(idx);
+    });
+  });
+
+  lbClose.addEventListener('click', closeLightbox);
+  lbNext.addEventListener('click', (e) => { e.stopPropagation(); nextPhoto(); });
+  lbPrev.addEventListener('click', (e) => { e.stopPropagation(); prevPhoto(); });
+
+  lb.addEventListener('click', (e) => {
+    if (e.target === lb || e.target.classList.contains('lightbox-img-wrap')) {
+      closeLightbox();
+    }
+  });
+
+  /* Keyboard Navigation */
+  document.addEventListener('keydown', (e) => {
+    if (!lb.classList.contains('active')) return;
+    if (e.key === 'ArrowRight') nextPhoto();
+    if (e.key === 'ArrowLeft')  prevPhoto();
+    if (e.key === 'Escape')     closeLightbox();
+  });
+
+  /* Touch Swipe on Mobile */
+  let touchStartX = 0;
+  lb.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  lb.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].screenX;
+    const diff = touchEndX - touchStartX;
+    if (diff > 50)  prevPhoto();
+    if (diff < -50) nextPhoto();
+  }, { passive: true });
+
+  /* Άνοιγμα συγκεκριμένης φωτογραφίας από την αρχική (past.html?event=...&photo=3) */
+  const startPhoto = parseInt(params.get('photo'), 10);
+  if (startPhoto > 0) showPhoto(startPhoto - 1);
+}
+</script>
+</body>
+</html>
