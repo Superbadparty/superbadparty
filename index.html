@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Commissioner:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -46,7 +46,7 @@
   <a href="#partners" onclick="closeMobile()">Partners</a>
 </div>
 
-<!-- HERO: video με το logo αριστερά, αφίσα δεξιά -->
+<!-- HERO: video με το logo που κουνιέται -->
 <section class="hero" id="home">
   <div class="hero-media">
     <video class="hero-video" autoplay muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback poster="hero-bg.jpg">
@@ -59,10 +59,6 @@
   <div class="hero-inner">
     <h1 class="sr-only">SUPERBAD</h1>
     <div class="hero-side">
-      <figure class="poster hero-poster">
-        <div class="poster-ph"><span class="display">Poster<br>drops<br>soon</span></div>
-        <img class="js-poster" alt="Αφίσα του επόμενου πάρτυ" hidden>
-      </figure>
       <p class="hero-sub" id="heroSub">Το επόμενο πάρτυ ανακοινώνεται σύντομα.</p>
       <a class="btn hero-btn" href="#next">Όλες οι λεπτομέρειες</a>
     </div>
@@ -78,7 +74,7 @@
     <div class="party">
       <figure class="poster">
         <div class="poster-ph"><span class="display">Poster<br>drops<br>soon</span></div>
-        <img class="js-poster" alt="Αφίσα του επόμενου πάρτυ" hidden>
+        <img class="js-poster" alt="Αφίσα του επόμενου πάρτυ" role="button" tabindex="0" title="Πάτα για να δεις όλη την αφίσα" hidden>
       </figure>
 
       <article class="info" aria-labelledby="nName">
@@ -90,6 +86,7 @@
           <div class="info-row"><dt>Μαγαζί</dt><dd id="nVenue">TBA</dd></div>
           <div class="info-row"><dt>Διεύθυνση</dt><dd id="nAddress">TBA</dd></div>
           <div class="info-row"><dt>DJs</dt><dd id="nOnDeck">TBA</dd></div>
+          <div class="info-row"><dt>Είσοδος</dt><dd id="nEntry">TBA</dd></div>
           <div class="info-row"><dt>Sponsor</dt><dd id="nSponsor">TBA</dd></div>
         </dl>
 
@@ -168,7 +165,13 @@
   <p class="footer-copy">© <span id="yr"></span> SUPERBAD</p>
 </footer>
 
-<script src="events.js?v=7"></script>
+<!-- Αφίσα σε πλήρες μέγεθος -->
+<div class="lightbox" id="posterBox" role="dialog" aria-modal="true" aria-label="Αφίσα">
+  <div class="lightbox-topbar"><span></span><button class="lightbox-close" id="pbClose" type="button" aria-label="Κλείσιμο"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="lightbox-img-wrap"><img id="pbImg" alt="Αφίσα του πάρτυ"></div>
+</div>
+
+<script src="events.js?v=10"></script>
 <script>
 document.getElementById('yr').textContent = new Date().getFullYear();
 const $ = id => document.getElementById(id);
@@ -185,9 +188,17 @@ if (typeof SOCIALS !== 'undefined') {
 
 /* Next party */
 const N = typeof NEXT_EVENT !== 'undefined' ? NEXT_EVENT : {};
+/* Αφίσα: εμφανίζεται μόλις φορτώσει (δοκιμάζει .jpg και .png). Αν λείπει, μένει η προσωρινή κάρτα. */
 if (N.poster) {
-  document.querySelectorAll('.js-poster').forEach(img => { img.src = N.poster; img.hidden = false; });
-  document.querySelectorAll('.poster-ph').forEach(ph => ph.hidden = true);
+  const probe = new Image();
+  probe.onload = () => {
+    document.querySelectorAll('.js-poster').forEach(img => { img.src = probe.src; img.hidden = false; });
+    document.querySelectorAll('.poster-ph').forEach(ph => ph.hidden = true);
+  };
+  probe.onerror = () => {
+    if (!probe.dataset.alt && /\.jpe?g$/i.test(N.poster)) { probe.dataset.alt = 1; probe.src = N.poster.replace(/\.jpe?g$/i, '.png'); }
+  };
+  probe.src = N.poster;
 }
 const setText = (id, v) => { if (v) $(id).textContent = v; };
 setText('nName', N.name);
@@ -196,6 +207,7 @@ setText('nDate', N.date);
 setText('nTime', N.time);
 setText('nAddress', N.address);
 setText('nSponsor', N.sponsor);
+if (N.entry && $('nEntry')) $('nEntry').textContent = N.entry;
 if (N.onDeck) $('nOnDeck').textContent = Array.isArray(N.onDeck) ? N.onDeck.join(' × ') : N.onDeck;
 if (N.venueUrl && isSet(N.venue)) {
   $('nVenue').innerHTML = `<a href="${N.venueUrl}" target="_blank" rel="noopener">${N.venue}</a>`;
@@ -276,6 +288,18 @@ if (heroVideo) {
   document.addEventListener('touchstart', retry, { once: true, passive: true });
   document.addEventListener('click', retry, { once: true });
 }
+
+/* Πάτημα στην αφίσα: ανοίγει ολόκληρη */
+const posterBox = $('posterBox');
+const openPoster = src => { $('pbImg').src = src; posterBox.classList.add('active'); document.body.style.overflow = 'hidden'; $('pbClose').focus(); };
+const closePoster = () => { posterBox.classList.remove('active'); document.body.style.overflow = ''; };
+document.querySelectorAll('.js-poster').forEach(img => {
+  img.addEventListener('click', () => openPoster(img.src));
+  img.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPoster(img.src); } });
+});
+$('pbClose').addEventListener('click', closePoster);
+posterBox.addEventListener('click', e => { if (e.target === posterBox || e.target.classList.contains('lightbox-img-wrap')) closePoster(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && posterBox.classList.contains('active')) closePoster(); });
 
 function closeMobile() {
   mMenu.classList.remove('open');

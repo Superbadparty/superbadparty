@@ -348,3 +348,52 @@ body::after {
   .pp-meta span + span::before { display: none; }
   .pp-tab { font-size: 16px; }
 }
+
+/* ---------------- HERO: μόνο το video με το logo (όπως στο PARA PERA) ---------------- */
+.hero-inner { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 100px 20px 9vh; }
+.hero-side { grid-column: auto; }
+.hero-video { object-position: 50% 50%; }
+.hero-media { background-position: 50% 50%; }
+@media (max-width: 900px) {
+  .hero-media { height: 46svh; background-position: 50% 50%; }
+  .hero-video { object-position: 50% 50%; }
+  .hero-inner { display: block; margin-top: 0; padding: 18px 20px 56px; }
+}
+.hero-sub { max-width: 46ch; }
+
+/* ---------------- LIGHTBOX: νέα κουμπιά ---------------- */
+.lightbox-close, .lightbox-nav-btn {
+  width: 50px; height: 50px; border-radius: 50%; padding: 0; display: grid; place-items: center; cursor: pointer;
+  background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.lightbox-close svg, .lightbox-nav-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.lightbox-close:hover, .lightbox-nav-btn:hover { background: #F80971; border-color: #F80971; color: #000; }
+.lightbox-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; }
+.lb-prev { left: 22px; } .lb-next { right: 22px; }
+.lightbox-counter {
+  font: 700 14px/1 "Commissioner", system-ui, sans-serif; color: #fff; letter-spacing: .04em;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.22); padding: 10px 15px; border-radius: 999px;
+}
+.lightbox-img-wrap img { border: 0; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+@media (max-width: 720px) {
+  .lightbox-nav-btn { top: auto; bottom: 22px; transform: none; }
+  .lb-prev { left: calc(50% - 62px); } .lb-next { right: calc(50% - 62px); }
+  .lightbox-img-wrap { padding: 76px 10px 96px; }
+}
+
+/* ---------------- ΑΦΙΣΑ: πάτημα για μεγέθυνση ---------------- */
+.poster .js-poster { cursor: zoom-in; }
+.zoom-hint {
+  position: absolute; right: 22px; bottom: 26px; display: inline-flex; align-items: center; gap: 6px; cursor: zoom-in;
+  font: 700 13px/1 "Commissioner", system-ui, sans-serif; color: #fff;
+  background: rgba(0,0,0,.65); border: 1px solid rgba(255,255,255,.25); padding: 8px 12px; border-radius: 999px;
+}
+.zoom-hint svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+#posterBox .lightbox-img-wrap { padding: 70px 16px 24px; }
+.lightbox-img-wrap img { max-height: calc(100vh - 170px); max-height: calc(100dvh - 170px); width: auto; }
+#posterBox .lightbox-img-wrap img { max-height: calc(100vh - 100px); max-height: calc(100dvh - 100px); }
+
+/* Κουμπιά επίπεδα (2D), χωρίς σκιά */
+.btn, .btn:hover, .btn:active { box-shadow: none; transform: none; }

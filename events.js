@@ -20,16 +20,17 @@ const SOCIALS = {
 
 const NEXT_EVENT = {
   name:     "SUPERBAD",
-  tagline:  "Η αφίσα βγαίνει τις επόμενες μέρες",
-  poster:   "",                                   // π.χ. "posters/superbad-oct.jpg"
+  tagline:  "White Girl R&B / Greek Pop",
+  poster:   "posters/superbad.jpg",               // βάλε την αφίσα στο posters/ με όνομα superbad.jpg (ή .png)
   date:     "Σάββατο 17 Οκτωβρίου",
   iso:      "2026-10-18T00:00:00+03:00",           // μεσάνυχτα Σαββάτου προς Κυριακή, για την αντίστροφη μέτρηση
   time:     "00:00",
   venue:    "Dunk Bar",
   venueUrl: "https://maps.app.goo.gl/1PA3sMuLdSoFbnFW6",
-  address:  "Πανόρμου & Αλέξη Παύλη 13Β",
+  address:  "Αλέξη Παύλη 37, Αθήνα 11524",
   onDeck:   ["Tiz", "Frunk"],
   sponsor:  "Moloko",
+  entry:    "10€",
 };
 
 const PAST_EVENTS = [
