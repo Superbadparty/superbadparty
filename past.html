@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Commissioner:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
 
@@ -35,45 +35,12 @@
   <button class="lightbox-nav-btn lb-next" id="lbNext" aria-label="Επόμενη" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
 </div>
 
-<script src="events.js?v=10"></script>
+<script src="events.js?v=13"></script>
 <script>
 const params = new URLSearchParams(location.search);
 const evSlug = params.get('event') || (typeof PAST_EVENTS !== 'undefined' && PAST_EVENTS[0] ? PAST_EVENTS[0].slug : null);
 const ev     = typeof getEventBySlug === 'function' ? getEventBySlug(evSlug) : null;
 const box    = document.getElementById('content');
-
-/**
- * Αυτόματο Fallback: αν μια φωτογραφία είναι .jpeg αντί για .jpg
- * (ή το αντίστροφο), το δοκιμάζει αυτόματα χωρίς σφάλμα!
- */
-function handleImageFallback(img) {
-  const exts = ['.jpg', '.jpeg', '.JPG', '.JPEG', '.png', '.PNG'];
-  let currentExt = '';
-  for (const e of exts) {
-    if (img.src.endsWith(e)) {
-      currentExt = e;
-      break;
-    }
-  }
-  if (!currentExt) return;
-  
-  let tried = [];
-  try {
-    tried = JSON.parse(img.dataset.tried || '[]');
-  } catch(e) {}
-  tried.push(currentExt);
-  img.dataset.tried = JSON.stringify(tried);
-
-  const nextExt = exts.find(e => !tried.includes(e));
-  if (nextExt) {
-    const newSrc = img.src.slice(0, -currentExt.length) + nextExt;
-    img.src = newSrc;
-    const parent = img.closest('.photo-item');
-    if (parent) {
-      parent.dataset.src = newSrc;
-    }
-  }
-}
 
 if (!ev) {
   box.innerHTML = '<h1 class="detail-title display">Δεν βρέθηκε</h1><p class="empty-note">Αυτό το πάρτυ δεν υπάρχει στη λίστα. Γύρνα στην αρχική για το επόμενο.</p>';
@@ -81,7 +48,7 @@ if (!ev) {
   document.getElementById('pgTitle').textContent = 'SUPERBAD — ' + ev.label;
 
   const rows = [
-        ev.time     ? ['Ώρα',      ev.time]     : null,
+    ev.time     ? ['Ώρα',      ev.time]     : null,
     ev.venue    ? ['Μαγαζί',     ev.venueUrl ? `<a href="${ev.venueUrl}" target="_blank" rel="noopener" class="venue-link">${ev.venue}</a>` : ev.venue] : null,
     ev.address  ? ['Διεύθυνση',   ev.address]  : null,
     ev.lineup   ? ['DJs',    ev.lineup]   : null,
@@ -146,11 +113,16 @@ if (!ev) {
     lbImg.src = activePhotoList[currentIndex];
     lbCounter.textContent = `${currentIndex + 1} / ${activePhotoList.length}`;
     lb.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    /* Φορτώνει από πριν την επόμενη και την προηγούμενη, για να αλλάζουν αμέσως */
+    const n = activePhotoList.length;
+    [currentIndex + 1, currentIndex - 1].forEach(k => { new Image().src = activePhotoList[(k + n) % n]; });
   }
 
   function nextPhoto() { showPhoto(currentIndex + 1); }
   function prevPhoto() { showPhoto(currentIndex - 1); }
-  function closeLightbox() { lb.classList.remove('active'); }
+  function closeLightbox() { lb.classList.remove('active'); document.body.style.overflow = ''; }
 
   document.querySelectorAll('.photo-item').forEach(el => {
     el.addEventListener('click', () => {

@@ -7,8 +7,10 @@
 <meta name="description" content="SUPERBAD — φοιτητικό πάρτυ. Ημερομηνία, μαγαζί και lineup του επόμενου πάρτυ.">
 <meta property="og:title" content="SUPERBAD">
 <meta property="og:description" content="Φοιτητικό πάρτυ. Δες πότε και πού είναι το επόμενο.">
-<meta property="og:image" content="logo-sticker.svg">
+<meta property="og:image" content="https://superbadparty.github.io/superbadparty/logo.png">
+<meta property="og:url" content="https://superbadparty.github.io/superbadparty/">
 <meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="logo-sticker.svg" type="image/svg+xml">
@@ -19,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Commissioner:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -51,7 +53,6 @@
   <div class="hero-media">
     <video class="hero-video" autoplay muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback poster="hero-bg.jpg?v=12">
       <source src="hero.mp4?v=12" type="video/mp4">
-      <source src="hero.mov?v=12" type="video/mp4">
     </video>
     <div class="hero-shade"></div>
   </div>
@@ -170,7 +171,7 @@
   <div class="lightbox-img-wrap"><img id="pbImg" alt="Αφίσα του πάρτυ"></div>
 </div>
 
-<script src="events.js?v=10"></script>
+<script src="events.js?v=13"></script>
 <script>
 document.getElementById('yr').textContent = new Date().getFullYear();
 const $ = id => document.getElementById(id);
@@ -206,7 +207,9 @@ setText('nDate', N.date);
 setText('nTime', N.time);
 setText('nAddress', N.address);
 setText('nSponsor', N.sponsor);
-if (N.entry && $('nEntry')) $('nEntry').textContent = N.entry;
+/* Είσοδος: αν είναι άδειο στο events.js, η γραμμή κρύβεται εντελώς */
+if (N.entry) $('nEntry').textContent = N.entry;
+else $('nEntry').parentElement.hidden = true;
 if (N.onDeck) $('nOnDeck').textContent = Array.isArray(N.onDeck) ? N.onDeck.join(' × ') : N.onDeck;
 if (N.venueUrl && isSet(N.venue)) {
   $('nVenue').innerHTML = `<a href="${N.venueUrl}" target="_blank" rel="noopener">${N.venue}</a>`;
@@ -218,20 +221,29 @@ if (isSet(N.date)) {
   $('heroSub').innerHTML = `Next party: <span>${N.date}</span>${isSet(N.time) ? ', ' + N.time : ''}${isSet(N.venue) ? ' στο ' + N.venue : ''}`;
 }
 
-/* Countdown: δείχνεται μόνο όταν υπάρχει iso ημερομηνία */
+/* Countdown: δείχνεται μόνο όταν υπάρχει iso ημερομηνία.
+   Όταν ξεκινήσει γράφει «ξεκίνησε»· 8 ώρες μετά, ότι τελείωσε (αν ξεχαστεί το events.js). */
 if (N.iso && !isNaN(new Date(N.iso))) {
   const target = new Date(N.iso).getTime();
   const pad = n => String(n).padStart(2, '0');
+  let timer;
   const tick = () => {
     const d = Math.max(0, target - Date.now());
     $('cdD').textContent = pad(Math.floor(d / 864e5));
     $('cdH').textContent = pad(Math.floor(d / 36e5) % 24);
     $('cdM').textContent = pad(Math.floor(d / 6e4) % 60);
     $('cdS').textContent = pad(Math.floor(d / 1e3) % 60);
-    if (d === 0) { $('countdown').hidden = true; $('soonNote').hidden = false; $('soonNote').textContent = 'Το πάρτυ ξεκίνησε. Τα λέμε μέσα!'; }
+    if (d === 0) {
+      clearInterval(timer);
+      const over = Date.now() - target > 8 * 36e5;
+      $('countdown').hidden = true; $('soonNote').hidden = false;
+      $('soonNote').textContent = over
+        ? 'Αυτό το πάρτυ τελείωσε. Το επόμενο ανακοινώνεται σύντομα, κάνε follow για να μη το χάσεις.'
+        : 'Το πάρτυ ξεκίνησε. Τα λέμε μέσα!';
+    }
   };
   $('countdown').hidden = false; $('soonNote').hidden = true;
-  tick(); setInterval(tick, 1000);
+  timer = setInterval(tick, 1000); tick();
 }
 
 /* Past parties: εμφανίζονται μόνο αν υπάρχουν */
@@ -249,9 +261,10 @@ if (PAST.length) {
     const meta = [e.date, e.venue, e.lineup ? 'DJs: ' + e.lineup : ''].filter(Boolean);
     $('ppPanel').innerHTML = `
       <p class="pp-meta">${meta.map(m => `<span>${m}</span>`).join('')}</p>
-      <div class="pp-grid">${thumbs.slice(0, 8).map((t, k) =>
+      ${thumbs.length ? `<div class="pp-grid">${thumbs.slice(0, 8).map((t, k) =>
         `<a class="pp-photo" href="past.html?event=${e.slug}&photo=${k + 1}" aria-label="Φωτογραφία ${k + 1}"><img src="${t}" alt="" loading="lazy" onerror="this.onerror=null;this.src=this.src.replace('/thumbs/','/')"></a>`).join('')}</div>
-      <a class="btn pp-all" href="past.html?event=${e.slug}">Όλες οι φωτογραφίες (${thumbs.length})</a>`;
+      <a class="btn pp-all" href="past.html?event=${e.slug}">Όλες οι φωτογραφίες (${thumbs.length})</a>`
+      : `<p class="empty-note">Οι φωτογραφίες ανεβαίνουν σύντομα.</p>`}`;
   };
   document.querySelectorAll('.pp-tab').forEach(t => t.addEventListener('click', () => showParty(+t.dataset.i)));
   showParty(PAST.length - 1);
